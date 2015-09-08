@@ -1,0 +1,128 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Text;
+using System.Threading.Tasks;
+using System.Drawing;
+using System.Diagnostics;
+
+
+namespace Neural
+{
+    public class Vector2
+    {
+        public float x { get; set; }
+        public float y { get; set; }
+
+        public Vector2()
+        {
+            x = 0; y = 0;
+        }
+
+        public Vector2(float r, float theta, bool polar)
+        {
+            x = (float)(r * Math.Cos(theta));
+            y = (float)(r * Math.Sin(theta));
+        }
+
+        public Vector2(float x, float y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
+        public Vector2(float[] arr)
+        {
+            this.x = arr[0];
+            this.y = arr[1];
+        }
+
+        public Vector2(PointF point)
+        {
+            this.x = point.X;
+            this.y = point.Y;
+        }
+
+        public void add(Vector2 b)
+        {
+            this.x += b.x;
+            this.y += b.y;
+        }
+
+        public Vector2 addR(Vector2 b)
+        {
+            return new Vector2(this.x + b.x, this.y + b.y);
+        }
+
+        public Vector2 negative()
+        {
+            return new Vector2(-this.x, -this.y);
+        }
+
+        public void subtract(Vector2 b)
+        {
+            this.x -= b.x;
+            this.y -= b.y;
+        }
+
+        public Vector2 subtractR(Vector2 b)
+        {
+            return new Vector2(this.x - b.x, this.y - b.y);
+        }
+
+        public float magnitude()
+        {
+            return (float)Math.Sqrt(this.x * this.x + this.y * this.y);
+        }
+
+        public float angle(Vector2 b)
+        {
+            float exp = (this.x * b.x + this.y * b.y) / (this.magnitude() * b.magnitude());
+            return (float)Math.Acos(exp);
+
+        }
+
+        public float dot(Vector2 b)
+        {
+            return this.x * b.x + this.y * b.y;
+        }
+
+        public Vector2 dot(float a)
+        {
+            return new Vector2(this.x * a, this.y * a);
+        }
+
+        public Vector2 normalize()
+        {
+            return new Vector2(this.x / this.magnitude(), this.y / this.magnitude());
+        }
+
+        //SPECIFICALLY 2D CROSS PRODUCT: RETURNS SCALAR
+        public float cross2(Vector2 b)
+        {
+            return this.x * b.y - this.y * b.x;
+        }
+        //CROSS PRODUCTS WITH CONSTANTS
+        public Vector2 cross(Vector2 b, float a)
+        {
+            return new Vector2(a * b.y, -a * b.x);
+        }
+
+        public Vector2 cross(float a, Vector2 b)
+        {
+            return new Vector2(-a * b.y, a * b.x);
+        }
+
+
+        public PointF toPoint() {
+            return new PointF(x, y);
+        }
+
+
+        public override string ToString()
+        {
+            return "[" + this.x + " , " + this.y + "]";
+        }
+    }
+}
