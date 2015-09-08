@@ -1,0 +1,32 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Drawing;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Neural
+{
+    class Game
+    {
+
+        public GameEngine gengine;
+
+        public const int HEIGHT = 1000;
+        public const int WIDTH = 800;
+
+
+        public void startGraphics(Graphics g)
+        {
+            gengine = new GameEngine(g);
+            gengine.init();
+        }
+
+
+
+        public void stopGame()
+        {
+            gengine.stop();
+        }
+    }
+}
