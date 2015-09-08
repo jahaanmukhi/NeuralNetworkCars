@@ -1,0 +1,643 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Text;
+using System.Threading.Tasks;
+using System.Drawing;
+using System.Diagnostics;
+
+
+namespace Neural
+{
+
+    class individual
+    {
+        public List<double> weights;
+        public int fitness;
+
+        public individual(List<double> weights, int fitness)
+        {
+            this.weights = weights;
+            this.fitness = 0;
+        }
+
+        public individual(int fitness)
+        {
+            this.weights = new List<double>();
+            this.fitness = 0;
+        }
+
+        public void setFitness(int fitness)
+        {
+            this.fitness = fitness;
+        }
+
+        public void increment()
+        {
+            fitness++;
+            //Console.WriteLine(fitness);
+        }
+        public int getFitness()
+        {
+            return fitness;
+        }
+
+    }
+
+    class Population
+    {
+        
+
+        public static int TournamentSize = 5;
+        public static Random r = new Random();
+        public int popSize;
+        public List<individual> indivs;
+        public static int GENERATIONS = 0;
+
+        public Population(int popSize)
+        {
+            this.popSize = popSize;
+            this.indivs = new List<individual>();
+        }
+
+        public Population(List<individual> individuals, int popSize) {
+            this.popSize = popSize;
+            this.indivs = individuals;
+        }
+
+        public static individual getFittest(Population p)
+        {
+            int best = 0;
+            individual fittest = p.indivs[0];
+            for (int i = 0; i < p.popSize; i++) {
+                if (p.indivs[i].getFitness() > best)
+                {
+                    best = p.indivs[i].getFitness();
+                    fittest = p.indivs[i];
+                }
+            }
+            return fittest;
+        }
+
+        public static individual Crossover(individual mom, individual dad)
+        {
+            individual child = new individual(0);
+            if (r.NextDouble() > 0.7) {
+                int crossPoint = r.Next(mom.weights.Count);
+                for(int i = 0; i < crossPoint; i++)
+                {
+                    child.weights.Add(mom.weights[i]);
+                }
+                for(int j = crossPoint; j < mom.weights.Count; j++)
+                {
+                    child.weights.Add(dad.weights[j]);
+                }
+            }
+            else
+            {
+                child = new individual(mom.weights, 0);
+            }
+            return child;
+        }
+
+        public static Population evolve(Population p)
+        {
+            Population ne = new Population(p.popSize);
+            for(int i = 0; i < ne.popSize; i++)
+            {
+                individual ch = Population.Crossover(tournamentSelection(p), tournamentSelection(p));
+                ch = new individual(mutate(ch).weights, 0);
+                ne.indivs.Add(ch);
+            }
+            GENERATIONS++;
+            return ne;
+        }
+        public static individual mutate(individual child)
+        {
+            individual mutated = new individual(0);
+            for (int i = 0; i < child.weights.Count; i++) {
+                if (r.NextDouble() < 0.05)
+                {
+                    mutated.weights.Add(r.NextDouble()*2-1);
+                }
+                else
+                {
+                    mutated.weights.Add(child.weights[i]);
+                }
+               
+                }
+            return mutated;
+        }
+
+        public static individual tournamentSelection(Population p) {
+            Population t = new Population(TournamentSize);
+            for(int i = 0; i < TournamentSize; i++)
+            {
+                t.indivs.Add(p.indivs[r.Next(p.popSize)]);
+            }
+
+            return Population.getFittest(t);
+        }
+
+
+        
+
+
+    }
+    class NeuralNetwork {
+        public static Random r = new Random();
+        int inputsCount;
+        int OutputsCount;
+        public int numOfHiddenLayer;
+        struct Neuron
+        {
+            public int noOfInputs;
+            public List<double> weights;
+
+            public Neuron(int n)
+            {
+                this.noOfInputs = n;
+                weights = new List<double>();
+                for (int i = 0; i < noOfInputs + 1; i++)
+                {
+
+                    weights.Add(r.NextDouble()*2-1);
+                }
+            }
+        }
+
+        struct NeuronLayer
+        {
+            public int noOfNeurons;
+            public Neuron[] neurons;
+            public NeuronLayer(int n, int inputsPerNeuron)
+            {
+                this.noOfNeurons = n;
+                neurons = new Neuron[noOfNeurons];
+                for(int i = 0; i < noOfNeurons; i++)
+                {
+                    neurons[i] = new Neuron(inputsPerNeuron);
+                }
+            }
+
+        }
+
+       
+
+        NeuronLayer[] neuronLayer;
+
+        public NeuralNetwork(int inputs, int outputs, int hiddenlayers)
+        {
+            this.inputsCount = inputs;
+            this.OutputsCount = outputs;
+            this.numOfHiddenLayer = hiddenlayers;
+            neuronLayer = new NeuronLayer[hiddenlayers];
+        }
+
+        public void CreateNet() {
+            neuronLayer[0] = new NeuronLayer(4, 4);//HIDDEN LAYER
+            neuronLayer[1] = new NeuronLayer(2, 4);//OUTPUT LAYER
+        }
+
+        public List<double> getWeights()
+        {
+            List<double> retur = new List<double>();
+
+            for (int i = 0; i < numOfHiddenLayer; i++)
+            {
+                for (int j = 0; j < neuronLayer[i].noOfNeurons; j++)
+                {
+                    int numberOfinputs = neuronLayer[i].neurons[j].noOfInputs;
+                    for (int k = 0; k < numberOfinputs + 1; k++)
+                    {
+                        retur.Add(neuronLayer[i].neurons[j].weights[k]);
+                    }
+                }
+            }
+
+            return retur;
+        }
+        public void putWeights(List<double> weights)
+        {
+
+            int countW = 0;
+
+            for (int i = 0; i < numOfHiddenLayer; i++)
+            {
+                for (int j = 0; j < neuronLayer[i].noOfNeurons; j++)
+                {
+                    int numberOfinputs = neuronLayer[i].neurons[j].noOfInputs;
+                    for (int k = 0; k < numberOfinputs+1; k++)
+                    {
+                        neuronLayer[i].neurons[j].weights[k] = weights[countW++];
+                    }
+                }
+            }
+        }
+
+        public List<double> update(List<double> inputer) {
+            List<double> inputs = new List<double>(inputer);
+            List<double> outputs = new List<double>();
+            if(inputs.Count  != inputsCount)
+            {
+                return outputs;
+            }
+            for(int i = 0; i < numOfHiddenLayer; i++)
+            {
+               if(i > 0)
+                {
+                    inputs = new List<double>(outputs);
+                }
+
+                outputs.Clear();
+                int countW = 0;
+
+                for(int j = 0; j < neuronLayer[i].noOfNeurons; j++)
+                {
+                    double netinput = 0;
+                    int numberOfinputs = neuronLayer[i].neurons[j].noOfInputs;
+                    for(int k = 0; k < numberOfinputs; k++)
+                    {
+                        netinput += neuronLayer[i].neurons[j].weights[k] * inputs[countW++];
+                    }
+                        netinput += neuronLayer[i].neurons[j].weights[numberOfinputs] * -1;
+
+                    outputs.Add(sigmoid(netinput));
+                    countW = 0;
+                }
+
+               
+            }
+            outputs[0] = outputs[0] * 10;
+            outputs[1] = outputs[1] * 4 - 2;
+            return outputs;
+
+        }
+
+        public double sigmoid(double activation)
+        {
+            return 1 / (1 + Math.Exp(-activation));
+        }
+
+
+        
+    }
+
+
+    class GameEngine
+    {
+        public const int cycles = 100000;
+        public static Random r = new Random();
+        //PHYSICS TIMER
+        public Stopwatch physics = new Stopwatch();
+        Population pop;
+        List<Car> cars = new List<Car>();
+        List<Passenger> pass = new List<Passenger>();
+        
+        int x = 0;
+        int TICKER = 0;
+        int graph = 0;
+        int TOTAL = 0;
+        Vector2 thisPoint;
+
+        List<Line> test;
+        bool add = false;
+        //GRAPHICS HANDLER
+        private Graphics handle;
+        Thread renderThread;
+        public GameEngine(Graphics g)
+        {
+            this.handle = g;
+        }
+
+        public void init()
+        {
+            //RENDERING THREAD
+            renderThread = new Thread(new ThreadStart(render));
+            renderThread.Start();
+
+            cars.Add(new Car(400, 400, 7));
+            cars.Add(new Car(200, 100, 7));
+            cars.Add(new Car(400, 100, 7));
+            cars.Add(new Car(350, 10, 7));
+            cars.Add(new Car(460, 60, 7));
+            cars.Add(new Car(70, 480, 7));
+            cars.Add(new Car(30, 110, 7));
+            cars.Add(new Car(343, 35, 7));
+            cars.Add(new Car(2, 22, 7));
+            cars.Add(new Car(400, 400, 7));
+            cars.Add(new Car(200, 100, 7));
+            cars.Add(new Car(400, 100, 7));
+            cars.Add(new Car(350, 10, 7));
+            cars.Add(new Car(460, 60, 7));
+            cars.Add(new Car(70, 480, 7));
+            cars.Add(new Car(30, 110, 7));
+            cars.Add(new Car(343, 35, 7));
+            cars.Add(new Car(2, 22, 7));
+
+            thisPoint = new Vector2(0, 980);
+            for (int i = 0; i < 20; i++) {
+                pass.Add(new Passenger(r.Next(800), r.Next(800)));
+            }
+
+            List<individual> carsPop = new List<individual>();
+            foreach(Car c in cars)
+            {
+                carsPop.Add(new individual(c.nn.getWeights(), 0));
+            }
+            pop = new Population(carsPop, cars.Count);
+           //Console.WriteLine(p);
+            physics.Start();
+        }
+
+
+
+        public void reset()
+        {
+            cars[0].setParams((float)(r.NextDouble() * 10), (float)(r.NextDouble() - 0.5d));
+        }
+
+        public void up(float dt)
+        {//UPDATE
+            if (TICKER < cycles)
+            {
+                for(int j = 0; j < cars.Count; j++)
+                {
+                    //BORDERCHECK
+                    if(cars[j].carLocation.x < 0)
+                    {
+                        cars[j].carLocation.x = 800;
+                    }else if(cars[j].carLocation.y < 0)
+                    {
+                        cars[j].carLocation.y = 800;
+                    }
+                    else if (cars[j].carLocation.x >800)
+                    {
+                        cars[j].carLocation.x = 0;
+                    }
+                    else if (cars[j].carLocation.y > 800)
+                    {
+                        cars[j].carLocation.y = 0;
+                    }
+
+
+                    cars[j].update(dt);
+                    Passenger p = cars[j].FindClosests(pass);
+                    if (true)
+                    {
+                        List<double> ins = new List<double>();
+                        ins.Add(cars[j].lookAt.x);
+                        ins.Add(cars[j].lookAt.y);
+                        Vector2 ideal = p.location.subtractR(cars[j].carLocation).normalize();
+                        ins.Add(ideal.x);
+                        ins.Add(ideal.y);
+                        List<double> outs = cars[j].nn.update(ins);
+                        //Console.WriteLine("O1 " + outs[0] + " O2 " + outs[1]);
+                        cars[j].setParams((float)outs[0], (float)outs[1]);
+                    }
+
+                    if (cars[j].carLocation.subtractR(p.location).magnitude() <= 12)
+                    {
+                        //Console.WriteLine("HIT");
+                        cars[j].fitness++;
+                        pop.indivs[j].increment();
+                        
+                        pass.Remove(p);
+                        pass.Add(new Passenger(r.Next(800), r.Next(800)));
+                    }
+                    //Console.WriteLine(pop.indivs[j].fitness);
+
+                }
+                TICKER++;
+
+            }
+            else
+            {
+                TOTAL= 0;
+                for(int i = 0; i < pop.popSize; i++)
+                {
+                    TOTAL += pop.indivs[i].fitness;
+                }
+                thisPoint = new Vector2(Population.GENERATIONS, 980 - (TOTAL / 10));
+                Console.WriteLine("TOTAL FITNESS = " + TOTAL + " FITTEST = " + Population.getFittest(pop).fitness);
+                pop = Population.evolve(pop);
+                for (int i = 0; i < cars.Count; i++)
+                {
+                    cars[i].nn.putWeights(pop.indivs[i].weights);
+                }
+                TICKER = 0;
+            }
+            
+        }
+
+
+        public void ptr(Graphics g)
+        {//PAINTER
+            g.DrawLine(Pens.LimeGreen, new Vector2(0, 800).toPoint(), new Vector2(800, 800).toPoint());
+            g.DrawString("GENERATIONS " + Population.GENERATIONS, SystemFonts.DialogFont, Brushes.Chartreuse, 10, 10);
+            for (int i = 0; i < pop.popSize; i++) {
+                if(pop.indivs[i] == Population.getFittest(pop) && pop.indivs[i].fitness > 0)
+                {
+                    cars[i].paint(g, true);
+                }
+                else
+                {
+                    cars[i].paint(g, false);
+                }
+            }
+
+            foreach (Passenger p in pass)
+            {
+                p.paint(g);
+            }
+            g.DrawEllipse(Pens.LimeGreen, thisPoint.x, thisPoint.y, 1, 1);
+            g.DrawLine(Pens.LimeGreen, new Vector2(0, 980).toPoint(), new Vector2(800, 980).toPoint());
+
+        }
+
+
+
+
+        //ABORT THREAD
+        public void stop()
+        {
+            renderThread.Abort();
+        }
+
+
+
+        public void render()
+        {
+            //BENCHMARKING
+            const float fps = 100;
+            const float dt = 1 / fps;
+            float accumulator = 0;
+            float frameStart = physics.ElapsedMilliseconds * 1000;
+
+            Bitmap frame = new Bitmap(Game.WIDTH, Game.HEIGHT);
+            Graphics frameGraphics = Graphics.FromImage(frame);
+
+            while (true)
+            {
+                float currentTime = physics.ElapsedMilliseconds * 1000;
+                //ACCUMALATOR
+                accumulator += currentTime - frameStart;
+                //Console.WriteLine(accumulator);
+                frameStart = currentTime;
+
+                if (accumulator > 0.2f)
+                    accumulator = 0.2f;
+
+                while (accumulator > dt)
+                {
+
+                    up(dt);
+                    accumulator -= dt;
+
+                }
+
+                //BACKGROUND
+                frameGraphics.FillRectangle(Brushes.Black, 0, 0, Game.WIDTH, 850);
+
+                ptr(frameGraphics);
+                //DRAW SAVED BITMAP
+                handle.DrawImage(frame, 0, 0, Game.WIDTH, Game.HEIGHT);
+
+
+            }
+        }
+
+    }
+
+    public class Line
+    {
+        Vector2 start; Vector2 end;
+        Vector2 center;
+        public Line(Vector2 start, Vector2 end)
+        {
+            this.start = start;
+            this.end = end;
+            center = start.addR(end).dot(0.5f);
+        }
+
+        public void paint(Graphics g, Pen p)
+        {
+            g.DrawLine(p, new PointF(start.x, start.y), new PointF(end.x, end.y));
+        }
+    }
+
+    public class Passenger
+    {
+        public Vector2 location;
+        Line l;
+        public Passenger(int x, int y)
+        {
+            this.location = new Vector2(x, y);
+        }
+
+        public void paint(Graphics g) {
+            Pen myPen = new Pen(Brushes.LimeGreen, 4);
+            l = new Line(location, location.addR(new Vector2(4, 0)));
+            l.paint(g, myPen);
+        }
+        
+    }
+
+    class Car
+    {
+        public Vector2 carLocation;
+        public float carHeading;
+        float carSpeed;
+        float steerAngle;
+        float wheelBase;
+        public NeuralNetwork nn;
+        public int killCount = 0;
+        public int fitness = 0;
+        Vector2 closestPass;
+        public Vector2 lookAt;
+        Line l;
+
+        public Car(int x, int y, float wheelBase)
+        {
+            carLocation = new Vector2(x, y);
+            this.wheelBase = wheelBase;
+            this.steerAngle = -0.04f;
+            this.carSpeed = 10f;
+            nn = new NeuralNetwork(4, 2, 2);
+            nn.CreateNet();
+            fitness = 0;
+
+        }
+
+        public void setParams(float speed, float steering)
+        {
+            this.carSpeed = speed;
+            this.steerAngle = steering;
+        }
+
+        public Passenger FindClosests(List<Passenger> lis)
+        {
+            float minDist = float.MaxValue;
+            Passenger close = lis[0];
+            foreach(Passenger p in lis)
+            {
+                if(carLocation.subtractR(p.location).magnitude() < minDist)
+                {
+                    minDist = carLocation.subtractR(p.location).magnitude();
+                    close = p;
+                    
+                }
+            }
+
+            return close;
+        }
+
+
+        public void update(float dt)
+        {
+            lookAt = new Vector2(1, carHeading, true);
+            Vector2 frontWheel = carLocation.addR(new Vector2((float)(Math.Cos(carHeading)), (float)(Math.Sin(carHeading))).dot(wheelBase / 2));
+            Vector2 backWheel = carLocation.subtractR(new Vector2((float)(Math.Cos(carHeading)), (float)(Math.Sin(carHeading))).dot(wheelBase / 2));
+            backWheel.add(new Vector2((float)Math.Cos(carHeading), (float)Math.Sin(carHeading)).dot(dt * carSpeed));
+            frontWheel.add(new Vector2((float)Math.Cos(carHeading + steerAngle), (float)Math.Sin(carHeading + steerAngle)).dot(dt * carSpeed));
+            carLocation = (frontWheel.addR(backWheel)).dot(0.5f);
+            carHeading = (float)Math.Atan2(frontWheel.y - backWheel.y, frontWheel.x - backWheel.x);
+        }
+
+
+
+        public void paint(Graphics g, bool fittest)
+        {
+            Vector2 side = new Vector2(10, carHeading, true);
+            Vector2 front = carLocation.addR(side);
+            Vector2 side1 = new Vector2(15, carHeading, true);
+            Vector2 front2 = carLocation.addR(side1);
+            if (!fittest)
+            {
+                Pen myPen = new Pen(Brushes.DarkOrange);
+                myPen.Width = wheelBase;
+                l = new Line(carLocation, front);
+                Line l1 = new Line(carLocation, front);
+                Line l2 = new Line(carLocation, front2);
+                l2.paint(g, new Pen(Color.DarkOrange, 2));
+                l1.paint(g, new Pen(Brushes.PapayaWhip, wheelBase + 4));
+                l.paint(g, myPen);
+            }
+            else
+            {
+                Pen myPen = new Pen(Brushes.MediumVioletRed);
+                myPen.Width = wheelBase;
+                l = new Line(carLocation, front);
+                Line l1 = new Line(carLocation, front);
+                Line l2 = new Line(carLocation, front2);
+                l2.paint(g, new Pen(Color.MediumVioletRed, 2));
+                l1.paint(g, new Pen(Brushes.HotPink, wheelBase + 4));
+                l.paint(g, myPen);
+            }
+            
+        }
+
+    }
+
+}
