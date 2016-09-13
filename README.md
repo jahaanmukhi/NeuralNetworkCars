@@ -6,6 +6,6 @@ Neural Network + Genetic Algorithm in GameEngine file
 https://www.youtube.com/watch?v=8JgCAbGn_Uk
 
 # TEDX Talk
-Late last year, TEDX@DAIS invited me to talk about my independent project, developing self evolving cars, as well as to explain the underlying power of genetic algorithms. 
+Last year, TEDX@DAIS invited me to talk about my independent project, developing self evolving cars, as well as to explain the underlying power of genetic algorithms. 
 
 
